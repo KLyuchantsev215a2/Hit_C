@@ -19,19 +19,19 @@ double _pow(double base, int exponent) {
 }
 
 double norm_vector(std::vector<double> x) {
-	return sqrt(x[1] * x[1] + x[2] * x[2]);
+	return sqrt(x[0] * x[0] + x[1] * x[1]);
 }
 
 std::vector<double> sub_coordinat(std::vector<double> x, std::vector<double> y) {
+	x[0] -= y[0];
 	x[1] -= y[1];
-	x[2] -= y[2];
 	return x;
 }
-mat ComputeL(mat L, int i, int j, int beta, double m, std::vector<std::vector<double>>  v, double *rho, std::vector<double> nabla_W) {
+/*mat ComputeL(mat L, int i, int j, int beta, double m, std::vector<std::vector<double>>  v, double *rho, std::vector<double> nabla_W) {
 	L(1, beta) -= (m / rho[j] * (v[j][0] - v[i][0])*nabla_W[beta]);
 	L(2, beta) -= (m / rho[j] * (v[j][1] - v[i][1])*nabla_W[beta]);
 	return L;
-}
+}*/
 double ComputeW(int i, int j, std::vector<std::vector<double>> x, double m, int N, double *h) {
 	std::vector<double> r = sub_coordinat(x[i], x[j]);
 	double W_i = 0;
@@ -63,12 +63,16 @@ double ComputeRho(int i, std::vector<std::vector<double>> x, double m, int N, do
 
 	double ro = 0;
 
-	for (int j = 1; j <= N; j++)
+	for (int j = 0; j < N; j++)
 		ro += m * ComputeW(i, j, x, m, N, h);
+
 	return  ro;
 }
 mat ComputeStress(mat F, int i, double mu, double k) {
 	mat F_3 = F;
+	F_3.set_size(3);
+	F_3(2, 3) = 0;
+	F_3(3, 2) = 0;
 	F_3(3, 3) = 1;
 	double J = det(F);
 	mat E = { { 1,0,0 }, {0, 1, 0}, {0, 0, 1} };
@@ -78,7 +82,10 @@ mat ComputeStress(mat F, int i, double mu, double k) {
 	mat stress = (2. * mu*devBiso + k / 10. * (pow(J, 5) - pow(J, -5))*E) / J;
 
 	mat stress_2(2, 2);
-	stress_2 = stress;
+	stress_2(0,0) = stress(0,0);
+	stress_2(0, 1) = stress(0, 1);
+	stress_2(1, 0) = stress(1, 0);
+
 	return stress_2;
 }
 double Compute_nabla_W(int i, int j, std::vector<std::vector<double>> x, double *h, int beta) {
